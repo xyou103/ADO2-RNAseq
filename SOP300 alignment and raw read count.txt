@@ -1,0 +1,219 @@
+#module load
+module use /apps/modulefiles/base
+module load fastqc/0.11.8
+module load multiqc/1.7
+module load cutadapt/1.18-foss-2018b-Python-3.6.6
+module load trimgalore/0.6.6
+module load star/2.7.3
+module load samtools/1.13
+
+#htseq install by conda and version
+conda activate
+conda install -c bioconda htseq
+htseq --version 2.0.1
+
+
+#downloading data from sequencing facility to eristwo via ftp 
+bsub -q filemove "wget -m --user=jcharles --password=MBCFjcharles! ftp://34.198.31.178 -p /PHShome/xy090/sop300/Data"
+
+#check MD5
+bsub -q short md5sum *.fastq.gz
+
+#reference genome
+bsub -q filemove "wget http://ftp.ensembl.org/pub/release-105/fasta/mus_musculus/dna/Mus_musculus.GRCm39.dna.primary_assembly.fa.gz"
+
+bsub -q filemove "wget http://ftp.ensembl.org/pub/release-105/gtf/mus_musculus/Mus_musculus.GRCm39.105.gtf.gz"
+
+#decompressed reference genome files
+tar -xvf *.tar
+
+#fastqc quality check
+fastqc *.fastq.gz
+
+#multiqc summary of fastqc results
+multiqc ./
+
+#adapter trim by trimgalore at erisone 
+
+bsub -q medium trim_galore --paired --stringency 3 --gzip -o trim 20220302_antiRL-1_XY9679_S98_R1_001.fastq.gz  20220302_antiRL-1_XY9679_S98_R2_001.fastq.gz
+
+bsub -q medium trim_galore --paired --stringency 3 --gzip -o trim 20220302_antiRL-2_XY9679_S99_R1_001.fastq.gz 20220302_antiRL-2_XY9679_S99_R2_001.fastq.gz
+
+bsub -q medium trim_galore --paired --stringency 3 --gzip -o trim 20220302_antiRL-3_XY9679_S100_R1_001.fastq.gz 20220302_antiRL-3_XY9679_S100_R2_001.fastq.gz
+
+bsub -q medium trim_galore --paired --stringency 3 --gzip -o trim 20220302_antiRL-4_XY9679_S101_R1_001.fastq.gz 20220302_antiRL-4_XY9679_S101_R2_001.fastq.gz
+
+bsub -q medium trim_galore --paired --stringency 3 --gzip -o trim 20220302_antiRL-5_XY9679_S102_R1_001.fastq.gz 20220302_antiRL-5_XY9679_S102_R2_001.fastq.gz
+
+bsub -q medium trim_galore --paired --stringency 3 --gzip -o trim 20220302_antiRL-6_XY9679_S103_R1_001.fastq.gz 20220302_antiRL-6_XY9679_S103_R2_001.fastq.gz
+
+bsub -q medium trim_galore --paired --stringency 3 --gzip -o ../scratch/trim-Igg/ 20220302_IgG-1_XY9679_S104_R1_001.fastq.gz 20220302_IgG-1_XY9679_S104_R2_001.fastq.gz
+
+bsub -q medium trim_galore --paired --stringency 3 --gzip -o ../scratch/trim-Igg/ 20220302_IgG-2_XY9679_S105_R1_001.fastq.gz 20220302_IgG-2_XY9679_S105_R2_001.fastq.gz
+
+bsub -q medium trim_galore --paired --stringency 3 --gzip -o ../scratch/trim-Igg/ 20220302_IgG-3_XY9679_S106_R1_001.fastq.gz 20220302_IgG-3_XY9679_S106_R2_001.fastq.gz
+
+bsub -q medium trim_galore --paired --stringency 3 --gzip -o ../scratch/trim-Igg/ 20220302_IgG-4_XY9679_S107_R1_001.fastq.gz 20220302_IgG-4_XY9679_S107_R2_001.fastq.gz
+
+bsub -q medium trim_galore --paired --stringency 3 --gzip -o ../scratch/trim-Igg/ 20220302_IgG-5_XY9679_S108_R1_001.fastq.gz 20220302_IgG-5_XY9679_S108_R2_001.fastq.gz
+
+bsub -q medium trim_galore --paired --stringency 3 --gzip -o ../scratch/trim-Igg/ 20220302_IgG-6_XY9679_S109_R1_001.fastq.gz 20220302_IgG-6_XY9679_S109_R2_001.fastq.gz
+
+#index reference genome at eristwo
+bsub -q bigmem STAR --runThreadN 8 --runMode genomeGenerate --genomeDir star --genomeFastaFiles GRCm39.fna --sjdbGTFfile GRCm39.gtf --sjdbOverhang 149
+
+#alignment by star at eristwo
+bsub -q normal star --runThreadN 6 --genomeDir ../../MouseReferenceGenome/star/ --readFilesIn 20220302_antiRL-1_XY9679_S98_R1_001_val_1.fq.gz 20220302_antiRL-1_XY9679_S98_R2_001_val_2.fq.gz --outSAMtype BAM Unsorted --readFilesCommand gunzip -c --outFileNamePrefix ../../scratch/antiRL1
+
+bsub -q normal star --runThreadN 6 --genomeDir ../../MouseReferenceGenome/star/ --readFilesIn 20220302_antiRL-2_XY9679_S99_R1_001_val_1.fq.gz 20220302_antiRL-2_XY9679_S99_R2_001_val_2.fq.gz --outSAMtype BAM Unsorted --readFilesCommand gunzip -c --outFileNamePrefix ../../scratch/antiRL2
+
+bsub -q normal star --runThreadN 6 --genomeDir ../../MouseReferenceGenome/star/ --readFilesIn 20220302_antiRL-3_XY9679_S100_R1_001_val_1.fq.gz 20220302_antiRL-3_XY9679_S100_R2_001_val_2.fq.gz --outSAMtype BAM Unsorted --readFilesCommand gunzip -c --outFileNamePrefix ../../scratch/antiRL3
+
+bsub -q normal star --runThreadN 6 --genomeDir ../../MouseReferenceGenome/star/ --readFilesIn 20220302_antiRL-4_XY9679_S101_R1_001_val_1.fq.gz 20220302_antiRL-4_XY9679_S101_R2_001_val_2.fq.gz --outSAMtype BAM Unsorted --readFilesCommand gunzip -c --outFileNamePrefix ../../scratch/antiRL4
+
+bsub -q normal star --runThreadN 6 --genomeDir ../../MouseReferenceGenome/star/ --readFilesIn 20220302_antiRL-5_XY9679_S102_R1_001_val_1.fq.gz 20220302_antiRL-5_XY9679_S102_R2_001_val_2.fq.gz --outSAMtype BAM Unsorted --readFilesCommand gunzip -c --outFileNamePrefix ../../scratch/antiRL5
+
+bsub -q normal star --runThreadN 6 --genomeDir ../../MouseReferenceGenome/star/ --readFilesIn 20220302_antiRL-6_XY9679_S103_R1_001_val_1.fq.gz 20220302_antiRL-6_XY9679_S103_R2_001_val_2.fq.gz --outSAMtype BAM Unsorted --readFilesCommand  gunzip -c --outFileNamePrefix ../../scratch/antiRL6
+
+bsub -q normal star --runThreadN 6 --genomeDir /PHShome/xy090/MouseReferenceGenome/star --readFilesIn 20220302_IgG-1_XY9679_S104_R1_001_val_1.fq.gz 20220302_IgG-1_XY9679_S104_R2_001_val_2.fq.gz --outSAMtype BAM Unsorted --readFilesCommand  gunzip -c --outFileNamePrefix ../IgG1
+
+bsub -q normal star --runThreadN 6 --genomeDir ../../MouseReferenceGenome/star/ --readFilesIn 20220302_IgG-2_XY9679_S105_R1_001_val_1.fq.gz 20220302_IgG-2_XY9679_S105_R2_001_val_2.fq.gz --outSAMtype BAM Unsorted --readFilesCommand  gunzip -c --outFileNamePrefix ../../scratch/IgG2
+
+bsub -q normal star --runThreadN 6 --genomeDir /PHShome/xy090/MouseReferenceGenome/star --readFilesIn 20220302_IgG-3_XY9679_S106_R1_001_val_1.fq.gz 20220302_IgG-3_XY9679_S106_R2_001_val_2.fq.gz --outSAMtype BAM Unsorted --readFilesCommand  gunzip -c --outFileNamePrefix ../IgG3
+
+bsub -q normal star --runThreadN 6 --genomeDir /PHShome/xy090/MouseReferenceGenome/star --readFilesIn 20220302_IgG-4_XY9679_S107_R1_001_val_1.fq.gz 20220302_IgG-4_XY9679_S107_R2_001_val_2.fq.gz --outSAMtype BAM Unsorted --readFilesCommand  gunzip -c --outFileNamePrefix ../IgG4
+
+bsub -q normal star --runThreadN 6 --genomeDir /PHShome/xy090/MouseReferenceGenome/star --readFilesIn 20220302_IgG-5_XY9679_S108_R1_001_val_1.fq.gz 20220302_IgG-5_XY9679_S108_R2_001_val_2.fq.gz  --outSAMtype BAM Unsorted --readFilesCommand  gunzip -c --outFileNamePrefix ../IgG5
+
+bsub -q normal star --runThreadN 6 --genomeDir /PHShome/xy090/MouseReferenceGenome/star --readFilesIn 20220302_IgG-6_XY9679_S109_R1_001_val_1.fq.gz 20220302_IgG-6_XY9679_S109_R2_001_val_2.fq.gz --outSAMtype BAM Unsorted --readFilesCommand  gunzip -c --outFileNamePrefix ../IgG6
+
+
+#name sort by samtools
+
+bsub -q normal samtools sort -@ 4 -m 2G -n -o antiRL1.sorted.bam antiRL1Aligned.out.bam
+
+bsub -q bigmem samtools sort -@ 8 -m 4G -n -o antiRL2.sorted.bam antiRL2Aligned.out.bam
+
+bsub -q normal samtools sort -@ 4 -m 2G -n -o antiRL3.sorted.bam antiRL3Aligned.out.bam
+
+bsub -q normal samtools sort -@ 4 -m 2G -n -o antiRL4.sorted.bam antiRL4Aligned.out.bam
+
+bsub -q normal samtools sort -@ 4 -m 2G -n -o antiRL5.sorted.bam antiRL5Aligned.out.bam
+
+bsub -q normal samtools sort -@ 4 -m 2G -n -o antiRL6.sorted.bam antiRL6Aligned.out.bam
+
+bsub -q normal samtools sort -@ 4 -m 2G -n -o IgG1.sorted.bam IgG1Aligned.out.bam
+
+bsub -q normal samtools sort -@ 4 -m 2G -n -o IgG2.sorted.bam IgG2Aligned.out.bam
+
+bsub -q normal samtools sort -@ 4 -m 2G -n -o IgG3.sorted.bam IgG3Aligned.out.bam
+
+bsub -q normal samtools sort -@ 4 -m 2G -n -o IgG4.sorted.bam IgG4Aligned.out.bam
+
+bsub -q normal samtools sort -@ 4 -m 2G -n -o IgG5.sorted.bam IgG5Aligned.out.bam
+
+bsub -q normal samtools sort -@ 4 -m 2G -n -o IgG6.sorted.bam IgG6Aligned.out.bam
+
+#gene feature counts by htseq
+
+bsub -q normal "htseq-count -f bam --stranded=no /PHShome/xy090/scratch/antiRL1.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.nos.antiRL1.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/antiRL1.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.r.antiRL1.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/antiRL1.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.antiRL1.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=no /PHShome/xy090/scratch/antiRL2.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.nos.antiRL2.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/antiRL2.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.r.antiRL2.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/antiRL2.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.antiRL2.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=no /PHShome/xy090/scratch/antiRL3.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.nos.antiRL3.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/antiRL3.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.r.antiRL3.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/antiRL3.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.antiRL3.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=no /PHShome/xy090/scratch/antiRL4.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.nos.antiRL4.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/antiRL4.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.r.antiRL4.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/antiRL4.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.antiRL4.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=no /PHShome/xy090/scratch/antiRL5.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.nos.antiRL5.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/antiRL5.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.r.antiRL5.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/antiRL5.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.antiRL5.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=no /PHShome/xy090/scratch/antiRL6.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.nos.antiRL6.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/antiRL6.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.r.antiRL6.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/antiRL6.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.antiRL6.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=no /PHShome/xy090/scratch/IgG1.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.nos.IgG1.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/IgG1.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.r.IgG1.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/IgG1.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.IgG1.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=no /PHShome/xy090/scratch/IgG2.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.nos.IgG2.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/IgG2.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.r.IgG2.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/IgG2.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.IgG2.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=no /PHShome/xy090/scratch/IgG3.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.nos.IgG3.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/IgG3.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.r.IgG3.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/IgG3.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.IgG3.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=no /PHShome/xy090/scratch/IgG4.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.nos.IgG4.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/IgG4.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.r.IgG4.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/IgG4.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.IgG4.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=no /PHShome/xy090/scratch/IgG5.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.nos.IgG5.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/IgG5.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.r.IgG5.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/IgG5.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.IgG5.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=no /PHShome/xy090/scratch/IgG6.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.nos.IgG6.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/IgG6.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.r.IgG6.txt"
+
+bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/IgG6.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.IgG6.txt"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
