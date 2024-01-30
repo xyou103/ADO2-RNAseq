@@ -188,32 +188,3 @@ bsub -q normal "htseq-count -f bam --stranded=reverse /PHShome/xy090/scratch/IgG
 
 bsub -q normal "htseq-count -f bam --stranded=reverse -t gene /PHShome/xy090/scratch/IgG6.sorted.bam /PHShome/xy090/MouseReferenceGenome/GRCm39.gtf > htseq.tgene.IgG6.txt"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
